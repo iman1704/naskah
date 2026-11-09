@@ -1,0 +1,61 @@
+class Naskah < Formula
+  desc "TUI markdown note browser"
+  homepage "https://github.com/iman1704/naskah"
+  version "__VERSION__"
+  license "MIT"
+
+  livecheck do
+    url "https://github.com/iman1704/naskah"
+    strategy :github_latest
+  end
+
+  if OS.mac?
+    if Hardware::CPU.arm?
+      url "https://github.com/iman1704/naskah/releases/download/v__VERSION__/naskah-v__VERSION__-aarch64-apple-darwin.tar.gz"
+      sha256 "__SHA256_MACOS_ARM64__"
+    else
+      url "https://github.com/iman1704/naskah/releases/download/v__VERSION__/naskah-v__VERSION__-x86_64-apple-darwin.tar.gz"
+      sha256 "__SHA256_MACOS_X86_64__"
+    end
+  elsif OS.linux?
+    if Hardware::CPU.arm?
+      url "https://github.com/iman1704/naskah/releases/download/v__VERSION__/naskah-v__VERSION__-aarch64-unknown-linux-gnu.tar.gz"
+      sha256 "__SHA256_LINUX_ARM64__"
+    else
+      url "https://github.com/iman1704/naskah/releases/download/v__VERSION__/naskah-v__VERSION__-x86_64-unknown-linux-gnu.tar.gz"
+      sha256 "__SHA256_LINUX_X86_64__"
+    end
+  else
+    odie "Naskah supports macOS and Linux only."
+  end
+
+  def install
+    bin.install "naskah"
+  end
+
+  post_install_steps do
+    on_macos do
+      run(
+        "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{prefix}}"],
+        must_succeed: false,
+        print_stderr: false,
+      )
+    end
+  end
+
+  def caveats
+    return unless OS.mac?
+
+    <<~EOS
+      Naskah is not notarized by Apple. Homebrew attempts to clear the
+      quarantine attribute during install; if macOS still blocks it, run:
+
+        xattr -dr com.apple.quarantine "#{prefix}"
+    EOS
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/naskah --version")
+  end
+end
